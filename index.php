@@ -22,14 +22,23 @@ if(isset($_GET['delete'])) {
     $del = $_GET['delete'];
     $db = $_SESSION['getdb'];
     $tbl = $conn->query("ALTER TABLE $db DROP `$del`");
+    header('Location: index.php?db='.$_SESSION['getdb']);
 }
-    if(isset($_GET['changetype'])) {
-        $cht = $_GET['changetype'];
+    if(!empty($_POST)) {
         $db = $_SESSION['getdb'];
-        //$type = $_POST['type'];
-        echo '<pre>';
-        print_r($_POST);
-        $tbl = $conn->query("ALTER TABLE $db CHANGE `$cht` `$cht` $type");
+        $type = $_POST['type'];
+        $name = $_POST['name'];
+        $oldtype =  $_POST['oldtype'];
+    foreach ($_POST as $key => $value){
+        if($key[0] === 'a' && $value !== ''){
+            $a = substr($key,1);
+            $tbl = $conn->prepare("ALTER TABLE $db CHANGE `$a` `$a` $type")->execute();
+        }
+        if($key[0] === 'b' && $value !== ''){
+            $b = substr($key,1);
+            $tbl = $conn->prepare("ALTER TABLE $db CHANGE `$b` `$name` $oldtype")->execute();
+        }
+    }
     }
 }
 catch(PDOException $e)
@@ -70,8 +79,8 @@ foreach ($tbl as $table){
             <td align="center"><?php echo $table['Default'] ?></td>
             <td align="center"><?php echo $table['Extra'] ?></td>
             <td align="center">
-                <form method="post" action="" enctype="multipart/form-data">
-                    <?php echo '<a href="index.php?delete=' . $table['Field'] . '">Удалить поле</a> <br/>';
+                    <form method="post" action="" enctype="multipart/form-data">
+                    <?php echo '<a href="index.php?db=' . $_SESSION['getdb'] . '&delete=' . $table['Field'] . '">Удалить поле</a> <br/>';
                     echo "<select name = 'type'>";
                     $data1=[];
                     $data1 = array('INT', 'VARCHAR', 'TEXT', 'DATE');
@@ -79,10 +88,13 @@ foreach ($tbl as $table){
                         $a = $data1[$i];
                         echo "<option value = '$a' > $a </option>";
                     }
-                    echo "</select>"; ?>
-                    <?php echo '<a href="index.php?changetype=' . $table['Type'] . '">Изменить тип поля</a> <br/>'?>
+                    echo "</select>";?>
+                    <input type="submit" name="<?= 'a'.$table['Field']; ?>" value="Изменить тип поля"><br/>
+                    <?php //echo '<a href="index.php?db=' . $_SESSION['getdb'] . '&changetype=' . $table['Field'] . '">Изменить тип поля</a> <br/>'?>
                     <input type="text" name="name" placeholder="Имя">
-                    <?php echo '<a href="index.php?changename=' . $table['Field'] . '">Изменить имя поля</a> <br/>'?>
+                <input type="submit" name="<?='b'.$table['Field']; ?>" value="Изменить имя поля">
+                <input type="hidden" name="oldtype" value="<?php echo $table['Type'] ?>">
+                    <?php //echo '<a href="index.php?db=' . $_SESSION['getdb'] . '&changename=' . $table['Field'] . '">Изменить имя поля</a> <br/>'?>
                 </form>
             </td>
         </tr>
